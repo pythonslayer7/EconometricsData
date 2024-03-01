@@ -1,0 +1,117 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+
+
+# Include similar code as HW1 for the basic steps
+file_location = "/Users/amyliang/Eco441K/HW7/hprice1.dta"
+f2 = "/Users/amyliang/Eco441K/HW7/WAGE2.DTA"
+df= pd.read_stata(file_location)
+new_df = pd.read_stata(f2)
+
+pd.set_option('display.max_columns', None)
+
+# Wooldridge Computer Exercise C6.8
+print("Wooldridge Computer Exercise C6.8")
+
+# Adding a constant term to the DataFrame
+df = sm.add_constant(df)
+
+# Running the regression
+model = sm.OLS(df['price'], df[['const', 'lotsize', 'sqrft', 'bdrms']])
+results = model.fit()
+
+# Summary of the regression
+print(results.summary())
+
+# Define values for prediction
+new_data = {'const': 1, 'lotsize': 10000, 'sqrft': 2300, 'bdrms': 4}
+
+# Create a DataFrame for prediction
+new_data_df = pd.DataFrame([new_data])
+
+# Predicted price with given values
+predicted_price = results.predict(new_data_df)
+rounded_predicted_price = round(predicted_price.iloc[0])
+print(f"Predicted price: ${rounded_predicted_price}")
+
+# Confidence interval for the predicted value
+predicted_ci = results.get_prediction(new_data_df).summary_frame()
+print(predicted_ci)
+
+ans = """
+based on our regression results, the predicted price for house with lotisze = 10,000, 
+sqrft = 2300, adn bdrms = 4 is approximately $337.the mean predicted price is $336.71 and the mean standard error is around $7.37.
+The 95 percent confidence interbal is about $322.04 to $351.37.
+The interval for indivudual observation is wider ranging from $2`6.82 to $456.59. Since condition numer is high, we know  that 
+multicollinearity is also high.
+"""
+print(ans)
+
+print()
+
+# Dropping rows with missing values in any relevant variable
+new_df = new_df[['lwage', 'educ', 'exper', 'tenure', 'married', 'black', 'south', 'urban']]
+new_df = new_df.dropna()
+
+# Setting the dependent and independent variables
+y = new_df['lwage']
+X = new_df[['educ', 'exper', 'tenure', 'married', 'black', 'south', 'urban']]
+
+# Adding a constant term to the independent variables
+X = sm.add_constant(X)
+
+# Fitting the model
+model = sm.OLS(y, X).fit()
+
+# Output the regression results
+print(model.summary())
+
+ans_1 = """
+(i)Based on the regression summary, hoding other factors constant, black individuals earn about 18.83 percent 
+lower wafes to nonblack individuals, and the difference is significant since p value is 0.
+"""
+
+print(ans_1)
+
+print()
+
+print("(ii)")
+# Dropping rows with missing values in any relevant variable
+new_df = new_df[['lwage', 'educ', 'exper', 'tenure', 'married', 'black']]
+new_df = new_df.dropna()
+
+# Creating interaction terms for married and black variables
+new_df['married_black'] = new_df['married'] * new_df['black']
+new_df['married_nonblack'] = new_df['married'] * (1 - new_df['black'])
+new_df['single_black'] = (1 - new_df['married']) * new_df['black']
+new_df['single_nonblack'] = (1 - new_df['married']) * (1 - new_df['black'])
+
+# Setting the dependent and independent variables
+y = new_df['lwage']
+X = new_df[['educ', 'exper', 'tenure', 'married', 'black', 'married_black', 'married_nonblack', 'single_black', 'single_nonblack']]
+
+# Adding a constant term to the independent variables
+X = sm.add_constant(X)
+
+# Fitting the model
+model = sm.OLS(y, X).fit()
+
+# Output the regression results
+print(model.summary())
+
+print()
+
+ans3 = """
+Being married has an association of 100.27 percent in wages, and Black individuals has 80.78 percent higher wages than nonblack
+individuals. married_black is statistically non-significant since p value is 0.988, and married_nonblack have 100.32 precent
+higher wages than single black individuals. Then single balck individuals ahve 80.82 percent hhigher wages than married
+nonblack individuals. Single nonblack individuals have 182.06 percent hgiher wages compare to single black individuals.
+Note that high condition number suggest that we have high multicollinearity. 
+"""
+print(ans3)
+
+
+
+
